@@ -1,0 +1,3 @@
+(library
+ (name db)
+ (libraries caqti-lwt caqti-driver-postgresql uri))

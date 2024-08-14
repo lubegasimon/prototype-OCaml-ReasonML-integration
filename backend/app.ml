@@ -8,8 +8,9 @@ let sanitize_path path =
 let headers =
   Cohttp.Header.of_list
     [
-      ("Access-Control-Allow-Origin", "*");
-      ("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      ("Access-Control-Allow-Credentials", "true");
+      ("Access-Control-Allow-Origin", "http://localhost:8080");
+      ("Access-Control-Allow-Methods", "GET, POST");
       ("Access-Control-Allow-Headers", "Content-Type");
     ]
 
@@ -18,20 +19,14 @@ let callback _conn req body =
   let path = Uri.path uri in
   Lwt_io.printf "The path is %s\n" path >>= fun () ->
   let method_ = Request.meth req in
-  match method_ with
-  | `OPTIONS -> Server.respond_string ~headers ~status:`OK ~body:"" ()
-  | `POST -> (
-      match sanitize_path path with
-      | [ "signup" ] -> Signup.signup req headers body
-      | _ ->
-          Server.respond_string ~headers ~status:`Not_found ~body:"Not found" ()
-      )
+  match (method_, sanitize_path path) with
+  | `POST, [ "signup" ] -> Signup.signup headers body
+  | `GET, [] -> Root.root req headers
   | _ -> Server.respond_string ~headers ~status:`Not_found ~body:"Not found" ()
 
 let server =
   Lwt.catch
     (fun () ->
-      (*FIXME: this is not printed on terminal when the server starts *)
       let server =
         Server.create ~mode:(`TCP (`Port 8000)) (Server.make ~callback ())
       in

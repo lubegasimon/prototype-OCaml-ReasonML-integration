@@ -1,4 +1,4 @@
 (executable
- (name server)
- (public_name server)
- (libraries mw fmt.tty lwt cohttp-lwt-unix))
+ (name app)
+ (public_name app)
+ (libraries db mw model fmt.tty lwt cohttp-lwt-unix))

@@ -1,21 +1,39 @@
 [@react.component]
 let make = () => {
   let (body, setBody) = React.useState(() => "No server connection!");
+  let (isLoggedIn, setIsLoggedIn) = React.useState(() => false);
 
-  Js.Promise.(
-    Fetch.fetchWithInit(
-      "http://localhost:8000",
-      Fetch.RequestInit.make(~method_=Get, ()),
+  React.useEffect0(() => {
+    Js.Promise.(
+      Fetch.fetchWithInit(
+        "http://localhost:8000",
+        Fetch.RequestInit.make(~method_=Get, ~credentials=Include, ()),
+      )
+      |> then_(Fetch.Response.text)
+      |> then_(msg =>
+           if (msg == "Logged in") {
+             setBody(_ => msg);
+             setIsLoggedIn(_ => true) |> resolve;
+           } else {
+             {
+               setBody(_ => msg);
+
+               setIsLoggedIn(_ => false);
+             }
+             |> resolve;
+           }
+         )
     )
-    |> then_(Fetch.Response.text)
-    |> then_(msg => setBody(_ => msg) |> resolve)
-  )
-  |> ignore;
+    |> ignore;
+    None;
+  });
 
   let children =
     <div>
       <div> <Link href="signup"> {React.string("Sign up")} </Link> </div>
     </div>;
 
-  <Home> {React.string(body)} children </Home>;
+  isLoggedIn
+    ? <Home> {React.string(body)} </Home>
+    : <Home> {React.string(body)} children </Home>;
 };
