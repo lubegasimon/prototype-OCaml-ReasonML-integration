@@ -17,10 +17,9 @@ let headers =
 let callback _conn req body =
   let uri = Request.uri req in
   let path = Uri.path uri in
-  Lwt_io.printf "The path is %s\n" path >>= fun () ->
   let method_ = Request.meth req in
   match (method_, sanitize_path path) with
-  | `POST, [ "signup" ] -> Signup.signup headers body
+  | `POST, [ "signup" ] -> Signup.signup req headers body
   | `GET, [] -> Root.root req headers
   | _ -> Server.respond_string ~headers ~status:`Not_found ~body:"Not found" ()
 
@@ -30,8 +29,7 @@ let server =
       let server =
         Server.create ~mode:(`TCP (`Port 8000)) (Server.make ~callback ())
       in
-      server >>= fun _ ->
-      Format.printf "Server listening on port 8000\n" |> Lwt.return)
+      server >>= fun _ -> Lwt_io.printf "Server listening on port 8000\n")
     (function
       | Unix.Unix_error (err, func, arg) ->
           Lwt_io.eprintf "Error starting server: %s in %s(%s)"
